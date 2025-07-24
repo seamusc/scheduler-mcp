@@ -49,7 +49,7 @@ After installing uv, restart your terminal to ensure the command is available.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mcp-scheduler.git
+git clone https://github.com/phialsbasement/mcp-scheduler.git
 cd mcp-scheduler
 
 # Create and activate a virtual environment with uv
@@ -68,7 +68,7 @@ If you prefer using standard pip:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mcp-scheduler.git
+git clone https://github.com/phialsbasement/mcp-scheduler.git
 cd mcp-scheduler
 
 # Create and activate a virtual environment
