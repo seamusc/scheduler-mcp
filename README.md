@@ -131,15 +131,15 @@ fastmcp install main.py --name "Task Scheduler"
 ```
 --address        Server address (default: localhost)
 --port           Server port (default: 8080)
---transport      Transport mode (sse or stdio) (default: stdio)
---log-level      Logging level (default: INFO)
---log-file       Log file path (default: mcp_scheduler.log)
---db-path        SQLite database path (default: scheduler.db)
---config         Path to JSON configuration file
---ai-model       AI model to use for AI tasks (default: gpt-4o)
---version        Show version and exit
---debug          Enable debug mode with full traceback
---fix-json       Enable JSON fixing for malformed messages
+--transport         Transport mode (sse or stdio) (default: stdio)
+--log-level         Logging level (default: INFO)
+--log-file          Log file path (default: mcp_scheduler.log)
+--db-path           SQLite database path (default: scheduler.db)
+--config            Path to JSON configuration file
+--claude-command    Claude Code command to use for AI tasks (default: claude)
+--version           Show version and exit
+--debug             Enable debug mode with full traceback
+--fix-json          Enable JSON fixing for malformed messages
 ```
 
 ### Configuration File
@@ -167,8 +167,7 @@ You can use a JSON configuration file instead of command-line arguments:
     "execution_timeout": 300
   },
   "ai": {
-    "model": "gpt-4o",
-    "openai_api_key": "your-api-key"
+    "claude_command": "claude"
   }
 }
 ```
@@ -220,8 +219,7 @@ The scheduler can be configured using environment variables:
 - `MCP_SCHEDULER_DB_PATH`: Database path (default: scheduler.db)
 - `MCP_SCHEDULER_CHECK_INTERVAL`: How often to check for tasks (default: 5 seconds)
 - `MCP_SCHEDULER_EXECUTION_TIMEOUT`: Task execution timeout (default: 300 seconds)
-- `MCP_SCHEDULER_AI_MODEL`: OpenAI model for AI tasks (default: gpt-4o)
-- `OPENAI_API_KEY`: API key for OpenAI tasks
+- `MCP_SCHEDULER_CLAUDE_COMMAND`: Command to invoke Claude Code CLI (default: claude)
 
 ## Examples
 
@@ -375,5 +373,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Built on the [Model Context Protocol](https://modelcontextprotocol.io/)
 - Uses [croniter](https://github.com/kiorky/croniter) for cron parsing
-- Uses [OpenAI API](https://openai.com/blog/openai-api) for AI tasks
+- Uses [Claude Code](https://claude.com/claude-code) in headless mode for AI tasks
 - Uses [FastMCP](https://github.com/jlowin/fastmcp) for enhanced MCP functionality

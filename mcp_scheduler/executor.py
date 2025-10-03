@@ -7,11 +7,10 @@ import shlex
 import subprocess
 import platform
 import os
+import json
 from datetime import datetime
 import aiohttp
 from typing import Optional, Tuple
-
-import openai
 
 from .task import Task, TaskExecution, TaskStatus, TaskType
 
@@ -20,16 +19,12 @@ logger = logging.getLogger(__name__)
 
 class Executor:
     """Task executor for running scheduled tasks."""
-    
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
+
+    def __init__(self, claude_command: str = "claude"):
         """Initialize the task executor."""
-        self.api_key = api_key
-        self.ai_model = model
+        self.claude_command = claude_command
         self.execution_timeout = 300  # 5 minutes default timeout
         self.is_windows = platform.system() == "Windows"
-        
-        if api_key:
-            openai.api_key = api_key
     
     async def execute_task(self, task: Task) -> TaskExecution:
         """Execute a task based on its type."""
@@ -203,27 +198,88 @@ class Executor:
             return None, f"API call timed out after {self.execution_timeout} seconds"
     
     async def _execute_ai_task(self, prompt: str) -> Tuple[Optional[str], Optional[str]]:
-        """Execute an AI task using OpenAI."""
+        """Execute an AI task using Claude Code in headless mode."""
         if not prompt:
             return None, "No prompt specified"
-        
-        if not self.api_key:
-            return None, "No API key configured for AI tasks"
-        
+
         try:
-            completion = await asyncio.to_thread(
-                openai.chat.completions.create,
-                model=self.ai_model,
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant executing scheduled tasks."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=2000
+            # Build the claude command for headless mode
+            # Using --print for non-interactive mode and --output-format json for structured output
+            command_parts = [
+                self.claude_command,
+                "-p",
+                prompt,
+                "--output-format", "json",
+                "--allowedTools", "Read,Glob,Grep,Bash,Edit,Write"
+            ]
+
+            # Join the command parts properly for shell execution
+            if self.is_windows:
+                # On Windows, we need to escape the prompt properly
+                safe_prompt = prompt.replace('"', '\\"')
+                command = f'{self.claude_command} -p "{safe_prompt}" --output-format json --allowedTools Read,Glob,Grep,Bash,Edit,Write'
+            else:
+                # On Unix-like systems, use shlex.quote for proper escaping
+                import shlex as sh
+                command = ' '.join(sh.quote(part) for part in command_parts)
+
+            logger.info(f"Executing Claude Code command: {command}")
+
+            # Execute the command with timeout
+            process = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                shell=True
             )
-            
-            return completion.choices[0].message.content, None
-            
+
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(),
+                    timeout=self.execution_timeout
+                )
+
+                if process.returncode != 0:
+                    error_msg = stderr.decode() if stderr else "Unknown error"
+                    return None, f"Claude Code failed with exit code {process.returncode}: {error_msg}"
+
+                # Parse the JSON output
+                output_str = stdout.decode().strip()
+
+                try:
+                    # Try to parse as JSON
+                    result = json.loads(output_str)
+
+                    # Extract the response text from the JSON structure
+                    # The exact structure may vary, so we'll handle common patterns
+                    if isinstance(result, dict):
+                        # Try common keys for the response
+                        response = (
+                            result.get('response') or
+                            result.get('content') or
+                            result.get('text') or
+                            result.get('message') or
+                            str(result)
+                        )
+                    else:
+                        response = str(result)
+
+                    return response, None
+
+                except json.JSONDecodeError:
+                    # If JSON parsing fails, return the raw output
+                    logger.warning("Failed to parse JSON output, returning raw text")
+                    return output_str, None
+
+            except asyncio.TimeoutError:
+                try:
+                    process.kill()
+                except Exception:
+                    pass
+                return None, f"AI task timed out after {self.execution_timeout} seconds"
+
         except Exception as e:
+            logger.exception("Error in AI task execution")
             return None, f"AI task failed: {str(e)}"
     
     async def _execute_reminder_task(self, title: str, message: str) -> Tuple[Optional[str], Optional[str]]:

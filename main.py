@@ -157,9 +157,9 @@ def main():
         help="Path to JSON configuration file"
     )
     parser.add_argument(
-        "--ai-model", 
+        "--claude-command",
         default=None,
-        help="AI model to use for AI tasks (default: gpt-4o or from config/env)"
+        help="Claude Code command to use for AI tasks (default: claude or from config/env)"
     )
     parser.add_argument(
         "--version", 
@@ -201,8 +201,8 @@ def main():
     if args.db_path:
         os.environ["MCP_SCHEDULER_DB_PATH"] = args.db_path
     
-    if args.ai_model:
-        os.environ["MCP_SCHEDULER_AI_MODEL"] = args.ai_model
+    if args.claude_command:
+        os.environ["MCP_SCHEDULER_CLAUDE_COMMAND"] = args.claude_command
     
     # Enable debug mode
     debug_mode = args.debug
@@ -238,7 +238,7 @@ def main():
         
         # Initialize components
         database = Database(config.db_path)
-        executor = Executor(config.openai_api_key, config.ai_model)
+        executor = Executor(config.claude_command)
         executor.execution_timeout = config.execution_timeout
         
         global scheduler

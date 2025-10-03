@@ -107,7 +107,6 @@ class SchedulerServer:
             dependencies=[
                 "croniter",
                 "pydantic",
-                "openai",
                 "aiohttp"
             ]
         )

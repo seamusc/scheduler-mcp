@@ -31,9 +31,8 @@ class Config:
         self.check_interval = int(os.environ.get("MCP_SCHEDULER_CHECK_INTERVAL", "5"))
         self.execution_timeout = int(os.environ.get("MCP_SCHEDULER_EXECUTION_TIMEOUT", "300"))
         
-        # AI configuration
-        self.openai_api_key = os.environ.get("OPENAI_API_KEY", None)
-        self.ai_model = os.environ.get("MCP_SCHEDULER_AI_MODEL", "gpt-4o")
+        # AI configuration (Claude Code)
+        self.claude_command = os.environ.get("MCP_SCHEDULER_CLAUDE_COMMAND", "claude")
         
         # Load config from file if provided
         config_file = os.environ.get("MCP_SCHEDULER_CONFIG_FILE", None)
@@ -69,9 +68,8 @@ class Config:
             self.check_interval = config.get("scheduler", {}).get("check_interval", self.check_interval)
             self.execution_timeout = config.get("scheduler", {}).get("execution_timeout", self.execution_timeout)
             
-            # AI configuration
-            self.openai_api_key = config.get("ai", {}).get("openai_api_key", self.openai_api_key)
-            self.ai_model = config.get("ai", {}).get("model", self.ai_model)
+            # AI configuration (Claude Code)
+            self.claude_command = config.get("ai", {}).get("claude_command", self.claude_command)
             
         except Exception as e:
             print(f"Error loading config file: {e}")
@@ -99,7 +97,6 @@ class Config:
                 "execution_timeout": self.execution_timeout
             },
             "ai": {
-                "model": self.ai_model,
-                # Don't include API key in output
+                "claude_command": self.claude_command
             }
         }
