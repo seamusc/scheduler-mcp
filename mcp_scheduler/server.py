@@ -102,7 +102,8 @@ class SchedulerServer:
         # Create MCP server with custom response formatting
         self.mcp = CustomFastMCP(
             config.server_name,
-            version=config.server_version,
+            host=config.server_address,
+            port=config.server_port,
             dependencies=[
                 "croniter",
                 "pydantic",
@@ -175,7 +176,10 @@ class SchedulerServer:
             enabled: bool = True,
             do_only_once: bool = True  # New parameter with default True
         ) -> Dict[str, Any]:
-            """Add a new shell command task."""
+            """Add a new shell command task.
+
+            Args:
+                schedule: Cron format schedule (e.g., '0 9 * * *' for daily at 9am UTC). Times are in UTC."""
             task = Task(
                 name=name,
                 schedule=schedule,
@@ -201,7 +205,10 @@ class SchedulerServer:
             enabled: bool = True,
             do_only_once: bool = True  # New parameter with default True
         ) -> Dict[str, Any]:
-            """Add a new API call task."""
+            """Add a new API call task.
+
+            Args:
+                schedule: Cron format schedule (e.g., '0 9 * * *' for daily at 9am UTC). Times are in UTC."""
             task = Task(
                 name=name,
                 schedule=schedule,
@@ -227,7 +234,10 @@ class SchedulerServer:
             enabled: bool = True,
             do_only_once: bool = True  # New parameter with default True
         ) -> Dict[str, Any]:
-            """Add a new AI task."""
+            """Add a new AI task.
+
+            Args:
+                schedule: Cron format schedule (e.g., '0 9 * * *' for daily at 9am UTC). Times are in UTC."""
             task = Task(
                 name=name,
                 schedule=schedule,
@@ -251,7 +261,10 @@ class SchedulerServer:
             enabled: bool = True,
             do_only_once: bool = True
         ) -> Dict[str, Any]:
-            """Add a new reminder task that shows a popup notification with sound."""
+            """Add a new reminder task that shows a popup notification with sound.
+
+            Args:
+                schedule: Cron format schedule (e.g., '0 9 * * *' for daily at 9am UTC). Times are in UTC."""
             # Check if we have notification capabilities on this platform
             os_type = platform.system()
             has_notification_support = True
@@ -302,7 +315,10 @@ class SchedulerServer:
             reminder_title: Optional[str] = None, # New parameter for reminders
             reminder_message: Optional[str] = None # New parameter for reminders
         ) -> Optional[Dict[str, Any]]:
-            """Update an existing task."""
+            """Update an existing task.
+
+            Args:
+                schedule: Cron format schedule (e.g., '0 9 * * *' for daily at 9am UTC). Times are in UTC."""
             update_data = {}
             
             if name is not None:
@@ -455,17 +471,13 @@ class SchedulerServer:
     def start(self):
         """Start the MCP server."""
         print(f"Starting MCP server with {self.config.transport} transport", file=sys.stderr)
-        
+
         try:
             # For FastMCP, only valid transport options are "stdio" or "sse"
             if self.config.transport == "stdio":
                 self.mcp.run(transport="stdio")
             else:
-                self.mcp.run(
-                    transport="sse",
-                    host=self.config.server_address,
-                    port=self.config.server_port
-                )
+                self.mcp.run(transport="sse")
         except Exception as e:
             logger.error(f"Error starting MCP server: {e}")
             print(f"Error starting MCP server: {e}", file=sys.stderr)
