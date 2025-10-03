@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  scheduler-mcp:
+    build: .
+    ports:
+      - "9200:8080"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
